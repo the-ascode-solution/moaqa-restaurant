@@ -1,6 +1,17 @@
-import { pgTable, text, varchar, decimal, boolean, timestamp, integer } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  varchar,
+  decimal,
+  boolean,
+  timestamp,
+  integer,
+  serial,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+/* ----------------------------- USERS TABLE ------------------------------ */
 
 export const users = pgTable("users", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -8,6 +19,12 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
 });
+
+export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+/* ---------------------------- MENU ITEMS TABLE -------------------------- */
 
 export const menuItems = pgTable("menu_items", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -21,25 +38,29 @@ export const menuItems = pgTable("menu_items", {
   isGlutenFree: boolean("is_gluten_free").default(false).notNull(),
 });
 
+export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
+  id: true,
+});
+export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
+export type MenuItem = typeof menuItems.$inferSelect;
+
+/* ------------------------------- REVIEWS TABLE --------------------------- */
+
 export const reviews = pgTable("reviews", {
-  id: varchar("id", { length: 36 }).primaryKey(),
+  id: serial("id").primaryKey(), // auto-increment
   name: text("name").notNull(),
   email: text("email").notNull(),
   rating: integer("rating").notNull(),
   text: text("text").notNull(),
-  isVisible: boolean("is_visible").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  isVisible: boolean("is_visible").default(false).notNull(), // admin approves
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true });
-export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: true });
-export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, isVisible: true, createdAt: true });
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-
-export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
-export type MenuItem = typeof menuItems.$inferSelect;
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+  isVisible: true,
+});
 
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type Review = typeof reviews.$inferSelect;
